@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
       const response = await axios.post(
         url,
         {
-          textQuery: `Clothing store in ${city}, India`,
+          textQuery: `t-shirt printer or corporate t-shirt supplier in ${city}, India`,
           pageToken: nextPageToken || undefined,
         },
         {
@@ -28,12 +28,16 @@ export async function GET(request, { params }) {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
             "X-Goog-FieldMask":
-              "places.displayName,places.nationalPhoneNumber,nextPageToken",
+              "places.displayName,places.nationalPhoneNumber,places.id,nextPageToken",
           },
         }
       );
 
       const currentShops = response.data.places;
+      if (!currentShops) {
+        break;
+      }
+
       nextPageToken = response.data.nextPageToken;
 
       shops.push(...currentShops);

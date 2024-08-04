@@ -26,9 +26,8 @@ function Home() {
       if (!response.ok) {
         throw new Error("Failed to fetch shops.");
       }
-
       const data = await response.json();
-      setShops(data);
+      setShops(data.map((d) => ({ ...d, selected: true })));
     } catch (err) {
       console.error("Error fetching shops:", err);
       setError(err.message);
@@ -36,6 +35,28 @@ function Home() {
       setLoading(false);
     }
   }, [cityName]);
+
+  const onCheckboxChange = (shopId) => {
+    setShops((s) =>
+      s.map((shop) =>
+        shop.id === shopId ? { ...shop, selected: !shop.selected } : shop
+      )
+    );
+  };
+
+  const onSendButtonClick = () => {
+    const selectedNumbers = shops
+      .filter((shop) => shop.selected)
+      .map((shop) => shop.nationalPhoneNumber);
+
+    if (selectedNumbers.length === 0) {
+      alert("No shops selected.");
+      return;
+    }
+
+    // Replace this with the actual logic to send WhatsApp messages
+    console.log("Sending WhatsApp messages");
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 flex items-center min-h-full">
@@ -73,7 +94,11 @@ function Home() {
                       key={index}
                       className="flex items-center bg-muted/20 rounded-md p-4"
                     >
-                      <Checkbox defaultChecked className="mr-4" />
+                      <Checkbox
+                        onCheckedChange={() => onCheckboxChange(shop.id)}
+                        defaultChecked
+                        className="mr-4"
+                      />
                       <div>
                         <h3 className="font-medium">{shop.displayName.text}</h3>
                         <p className="text-muted-foreground">
@@ -84,7 +109,10 @@ function Home() {
                   ))}
               </div>
               <div className="mt-6 flex justify-end">
-                <Button className="bg-primary text-primary-foreground">
+                <Button
+                  onClick={onSendButtonClick}
+                  className="bg-primary text-primary-foreground"
+                >
                   Send
                 </Button>
               </div>
