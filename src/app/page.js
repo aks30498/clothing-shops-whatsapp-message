@@ -27,7 +27,11 @@ function Home() {
         throw new Error("Failed to fetch shops.");
       }
       const data = await response.json();
-      setShops(data.map((d) => ({ ...d, selected: true })));
+      setShops(
+        data
+          .filter((d) => d.nationalPhoneNumber)
+          .map((d) => ({ ...d, selected: true }))
+      );
     } catch (err) {
       console.error("Error fetching shops:", err);
       setError(err.message);
@@ -44,18 +48,25 @@ function Home() {
     );
   };
 
-  const onSendButtonClick = () => {
-    const selectedNumbers = shops
-      .filter((shop) => shop.selected)
-      .map((shop) => shop.nationalPhoneNumber);
+  const onDownloadCSV = () => {
+    const selectedShops = shops.filter((s) => s.selected);
 
-    if (selectedNumbers.length === 0) {
-      alert("No shops selected.");
-      return;
-    }
+    const csvRows = selectedShops.map((row) => {
+      const name = row.displayName.text.replace(/"/g, '""');
+      const phoneNumber = ("" + row.nationalPhoneNumber).replace(/"/g, '""');
+      return `"${name}","${phoneNumber}"`;
+    });
 
-    // Replace this with the actual logic to send WhatsApp messages
-    console.log("Sending WhatsApp messages");
+    // Create the CSV file content
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -84,37 +95,35 @@ function Home() {
 
           {shops.length > 0 && (
             <div className="bg-background border border-muted rounded-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Select Shops</h2>
-              {error && <p className="text-red-500 mb-4">{error}</p>}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {shops
-                  .filter((s) => s.nationalPhoneNumber)
-                  .map((shop, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center bg-muted/20 rounded-md p-4"
-                    >
-                      <Checkbox
-                        onCheckedChange={() => onCheckboxChange(shop.id)}
-                        defaultChecked
-                        className="mr-4"
-                      />
-                      <div>
-                        <h3 className="font-medium">{shop.displayName.text}</h3>
-                        <p className="text-muted-foreground">
-                          {shop.nationalPhoneNumber}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-              <div className="mt-6 flex justify-end">
+              <div className="flex justify-between">
+                <h2 className="text-xl font-semibold mb-4">Select Shops</h2>
                 <Button
-                  onClick={onSendButtonClick}
+                  onClick={onDownloadCSV}
                   className="bg-primary text-primary-foreground"
                 >
-                  Send
+                  Download CSV
                 </Button>
+              </div>
+              {error && <p className="text-red-500 mb-4">{error}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {shops.map((shop, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center bg-muted/20 rounded-md p-4"
+                  >
+                    <Checkbox
+                      onCheckedChange={() => onCheckboxChange(shop.id)}
+                      defaultChecked
+                      className="mr-4"
+                    />
+                    <div>
+                      <h3 className="font-medium">{shop.displayName.text}</h3>
+                      <p className="text-muted-foreground">
+                        {shop.nationalPhoneNumber}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
